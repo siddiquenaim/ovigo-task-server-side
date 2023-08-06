@@ -58,6 +58,17 @@ async function run() {
       res.send(result);
     });
 
+    // user community data for specific user
+    app.get("/userCommunity"),
+      async (req, res) => {
+        let query = {};
+        if (req.query.userEmail) {
+          query = { adminEmail: req.query.userEmail };
+        }
+        const result = await communityCollection.find(query).toArray();
+        res.send(result);
+      };
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
