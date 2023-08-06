@@ -28,7 +28,9 @@ async function run() {
 
     // collections
     const userCollection = client.db("ovigo").collection("users");
+    const communityCollection = client.db("ovigo").collection("communities");
 
+    // create a user
     app.post("/users", async (req, res) => {
       const newUser = req.body;
       const query = { email: newUser.email };
@@ -40,6 +42,20 @@ async function run() {
         const result = await userCollection.insertOne(newUser);
         res.send(result);
       }
+    });
+
+    // create a new community
+    app.post("/allCommunities", async (req, res) => {
+      const communityInfo = req.body;
+      //   console.log(communityInfo);
+      const result = await communityCollection.insertOne(communityInfo);
+      res.send(result);
+    });
+
+    // get data of all communities
+    app.get("/allCommunities", async (req, res) => {
+      const result = await communityCollection.find().toArray();
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
