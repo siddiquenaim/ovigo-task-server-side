@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 require("dotenv").config();
 
@@ -69,8 +69,36 @@ async function run() {
         res.send(result);
       };
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    //   single community details
+    app.get("/allCommunities/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await communityCollection.findOne(query);
+      res.send(result);
+    });
+
+    // join a community
+    app.patch("/joinCommunity/:id", async (req, res) => {
+      const id = req.params.id;
+      const memberEmail = req.body.userEmail;
+      const community = await communityCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (community.members.includes(memberEmail)) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Member already exists in the community.",
+          });
+      }
+      const query = { _id: new ObjectId(id) };
+      const update = { $push: { members: memberEmail } };
+      const result = await communityCollection.updateOne(query, update);
+      res.send(result);
+    }),
+      // Send a ping to confirm a successful connection
+      await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
