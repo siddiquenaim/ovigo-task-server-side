@@ -140,6 +140,35 @@ async function run() {
         res.send(result);
       });
 
+    // leave community
+    app.patch("/leaveCommunity/:id", async (req, res) => {
+      const id = req.params.id;
+      const memberEmail = req.body.email;
+
+      const community = await communityCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!community.members.includes(memberEmail)) {
+        return res.status(400).json({
+          success: false,
+          message: "Member does not exist in the community.",
+        });
+      }
+
+      const query = { _id: new ObjectId(id) };
+      const update = { $pull: { members: memberEmail } };
+
+      const result = await communityCollection.updateOne(query, update);
+
+      // remove community from user's list of communities
+      const updateUserQuery = { email: memberEmail };
+      const updateUserUpdate = { $pull: { communities: id } };
+      await userCollection.updateOne(updateUserQuery, updateUserUpdate);
+
+      res.send(result);
+    });
+
     // post in community
     app.post("/post-in-community", async (req, res) => {
       const newPost = req.body;
