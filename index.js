@@ -29,6 +29,7 @@ async function run() {
     // collections
     const userCollection = client.db("ovigo").collection("users");
     const communityCollection = client.db("ovigo").collection("communities");
+    const postCollection = client.db("ovigo").collection("posts");
 
     // create a user
     app.post("/users", async (req, res) => {
@@ -79,7 +80,7 @@ async function run() {
       res.send(result);
     });
 
-    // joined communities list
+    // joined communities list - finding user data
     app.get("/joinedCommunities", async (req, res) => {
       let query = {};
       if (req.query.userEmail) {
@@ -138,6 +139,28 @@ async function run() {
         const result = await userCollection.updateOne(query, updateUser);
         res.send(result);
       });
+
+    // post in community
+    app.post("/post-in-community", async (req, res) => {
+      const newPost = req.body;
+      console.log(newPost);
+      const result = await postCollection.insertOne(newPost);
+      res.send(result);
+    });
+
+    // post of specific id
+    app.get("/view-posts/:communityID", async (req, res) => {
+      const communityID = req.params.communityID;
+      const query = { communityID: communityID };
+      const result = await postCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // all posts
+    app.get("/all-posts", async (req, res) => {
+      const result = await postCollection.find().toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
