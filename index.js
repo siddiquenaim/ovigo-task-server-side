@@ -44,6 +44,15 @@ async function run() {
       }
     });
 
+    // find a single user
+    app.get("/findUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      console.log(query);
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+
     // create a new community
     app.post("/allCommunities", async (req, res) => {
       const communityInfo = req.body;
@@ -59,15 +68,22 @@ async function run() {
     });
 
     // user community data for specific user
-    app.get("/userCommunity"),
-      async (req, res) => {
-        let query = {};
-        if (req.query.userEmail) {
-          query = { adminEmail: req.query.userEmail };
-        }
-        const result = await communityCollection.find(query).toArray();
-        res.send(result);
-      };
+    app.get("/userCommunity", async (req, res) => {
+      let query = {};
+      if (req.query.userEmail) {
+        query = { adminEmail: req.query.userEmail };
+        console.log(query);
+        console.log(query);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "User doesn't have a community",
+        });
+      }
+      const result = await communityCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
 
     //   single community details
     app.get("/allCommunities/:id", async (req, res) => {
@@ -85,12 +101,10 @@ async function run() {
         _id: new ObjectId(id),
       });
       if (community.members.includes(memberEmail)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Member already exists in the community.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Member already exists in the community.",
+        });
       }
       const query = { _id: new ObjectId(id) };
       const update = { $push: { members: memberEmail } };
