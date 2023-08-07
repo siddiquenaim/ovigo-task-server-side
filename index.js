@@ -35,7 +35,6 @@ async function run() {
       const newUser = req.body;
       const query = { email: newUser.email };
       const existingUser = await userCollection.findOne(query);
-      console.log(existingUser);
       if (existingUser) {
         return res.send({ message: "user already exists" });
       } else {
@@ -48,7 +47,6 @@ async function run() {
     app.get("/findUser/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
-      console.log(query);
       const result = await userCollection.findOne(query);
       res.send(result);
     });
@@ -56,7 +54,6 @@ async function run() {
     // create a new community
     app.post("/allCommunities", async (req, res) => {
       const communityInfo = req.body;
-      //   console.log(communityInfo);
       const result = await communityCollection.insertOne(communityInfo);
       res.send(result);
     });
@@ -72,8 +69,6 @@ async function run() {
       let query = {};
       if (req.query.userEmail) {
         query = { adminEmail: req.query.userEmail };
-        console.log(query);
-        console.log(query);
       } else {
         return res.status(400).json({
           success: false,
@@ -81,7 +76,21 @@ async function run() {
         });
       }
       const result = await communityCollection.find(query).toArray();
-      console.log(result);
+      res.send(result);
+    });
+
+    // joined communities list
+    app.get("/joinedCommunities", async (req, res) => {
+      let query = {};
+      if (req.query.userEmail) {
+        query = { email: req.query.userEmail };
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "User never joined a community.",
+        });
+      }
+      const result = await userCollection.findOne(query);
       res.send(result);
     });
 
@@ -108,11 +117,30 @@ async function run() {
       }
       const query = { _id: new ObjectId(id) };
       const update = { $push: { members: memberEmail } };
+
       const result = await communityCollection.updateOne(query, update);
       res.send(result);
     }),
-      // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
+      app.patch("/updateUser/:id", async (req, res) => {
+        const communityID = req.params.id;
+        const email = req.body.userEmail;
+        const user = await userCollection.findOne({
+          email: email,
+        });
+        if (user?.communities?.includes(communityID)) {
+          return res.status(400).json({
+            success: false,
+            message: "Member already exists in the community.",
+          });
+        }
+        const query = { email: email };
+        const updateUser = { $push: { communities: communityID } };
+        const result = await userCollection.updateOne(query, updateUser);
+        res.send(result);
+      });
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
